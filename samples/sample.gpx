@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="chatgpt" version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Sample Ride</name>
+    <trkseg>
+      <trkpt lat="40.00000" lon="-74.00000"><ele>10.0</ele><time>2025-08-01T10:00:00Z</time></trkpt>
+      <trkpt lat="40.00050" lon="-74.00050"><ele>15.0</ele><time>2025-08-01T10:05:00Z</time></trkpt>
+      <trkpt lat="40.00100" lon="-74.00000"><ele>18.0</ele><time>2025-08-01T10:10:00Z</time></trkpt>
+      <trkpt lat="40.00150" lon="-73.99950"><ele>12.0</ele><time>2025-08-01T10:15:00Z</time></trkpt>
+      <trkpt lat="40.00200" lon="-73.99900"><ele>20.0</ele><time>2025-08-01T10:20:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

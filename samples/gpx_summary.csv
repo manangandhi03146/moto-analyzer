@@ -1,0 +1,4 @@
+file,distance_km,duration_h,avg_speed_kmh,max_speed_kmh,elevation_gain_m,max_elevation_m,max_lean_deg,max_lean_right_deg,max_lean_left_deg,max_accel_g,max_brake_g,hard_accel_events,hard_brake_events,smooth_pct,riding_style
+Laramie_Enduro_2015.gpx,109.380974,8.441944,12.956846,,2701.800000,2722.500000,,,,,,,,,
+Laramie_Enduro_2016.gpx,109.352512,7.436667,14.704506,,2248.400000,2714.800000,,,,,,,,,
+sample.gpx,0.280141,0.333333,0.840424,,16.000000,20.000000,,,,,,,,,

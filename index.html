@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ride Report</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void:           #181818;
+  --surface:        #242424;
+  --surface-raised: #2F2F2F;
+  --divider:        #383838;
+  --text-primary:   #F0F0EE;
+  --text-secondary: #8C8C8C;
+  --text-tertiary:  #737373;
+  --text-ghost:     #595959;
+  --ember:          #FF6D00;
+  --ember-dim:      rgba(255, 109, 0, 0.1);
+  --radius:         16px;
+  --radius-sm:      10px;
+}
+
+body {
+  background: var(--void);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Landing ─────────────────────────────────────────────────────────────── */
+
+#landing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 48px 24px;
+}
+
+.landing-header { text-align: center; margin-bottom: 40px; }
+
+.landing-title {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.landing-sub { font-size: 15px; color: var(--text-secondary); }
+
+.dropzone {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1.5px dashed rgba(255, 109, 0, 0.3);
+  padding: 48px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease;
+  text-align: center;
+}
+
+.dropzone:hover,
+.dropzone.drag-over {
+  border-color: var(--ember);
+  background: rgba(255, 109, 0, 0.05);
+}
+
+.dropzone.drag-over { background: rgba(255, 109, 0, 0.08); }
+
+.upload-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--ember-dim);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.upload-icon svg { color: var(--ember); }
+.upload-title { font-size: 17px; font-weight: 600; letter-spacing: -0.2px; }
+
+.upload-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.upload-hint span { color: var(--ember); font-weight: 500; }
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 24px;
+  background: var(--ember);
+  color: #F0F0EE;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+  white-space: nowrap;
+  margin-top: 8px;
+}
+
+.btn-primary:hover  { opacity: 0.88; }
+.btn-primary:active { opacity: 0.76; }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 20px;
+  background: var(--ember-dim);
+  color: var(--ember);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover { opacity: 0.82; }
+
+/* ── Processing ──────────────────────────────────────────────────────────── */
+
+.processing {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 16px;
+  padding: 48px 24px;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--surface-raised);
+  border-top-color: var(--ember);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.processing-label { font-size: 15px; color: var(--text-secondary); }
+
+/* ── Report ──────────────────────────────────────────────────────────────── */
+
+#report-view { display: none; padding: 44px 24px 72px; }
+
+.report-topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+  max-width: 840px;
+  margin-left: auto;
+  margin-right: auto;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.page-meta { font-size: 15px; color: var(--text-secondary); }
+.report-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+
+/* ── Ride cards ──────────────────────────────────────────────────────────── */
+
+.rides {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 840px;
+  margin: 0 auto;
+}
+
+.ride-card { background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+
+.ride-card-header {
+  background: var(--ember);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+}
+
+.ride-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: #F0F0EE;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.ride-card-body { padding: 16px; }
+
+.stats-primary { display: grid; grid-template-columns: repeat(3, 1fr); padding-bottom: 14px; }
+
+.stats-highlight {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  padding: 14px 0;
+  border-top: 1px solid var(--divider);
+  border-bottom: 1px solid var(--divider);
+  margin-bottom: 16px;
+}
+
+.stat { display: flex; flex-direction: column; gap: 3px; }
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+.stat-value.ember { color: var(--ember); }
+.stat-value.na    { color: var(--text-ghost); font-weight: 400; font-size: 18px; }
+.stat-sub         { font-size: 11px; color: var(--text-tertiary); line-height: 1.3; }
+.stat-label       { font-size: 11px; font-weight: 500; letter-spacing: 0.4px; text-transform: uppercase; color: var(--text-secondary); }
+
+/* Riding style section */
+.style-section {
+  padding: 14px 0 16px;
+  border-top: 1px solid var(--divider);
+  border-bottom: 1px solid var(--divider);
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.style-header { display: flex; align-items: center; justify-content: space-between; }
+
+.style-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.style-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.accel-stats { display: grid; grid-template-columns: repeat(3, 1fr); }
+
+/* Charts */
+.charts { display: flex; flex-direction: column; gap: 16px; }
+.chart-block { display: flex; flex-direction: column; gap: 7px; }
+
+.chart-heading {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.accel-legend { display: flex; gap: 16px; margin-top: 6px; }
+.legend-item  { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+.legend-dot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* Empty state */
+.empty { padding: 56px 24px; text-align: center; max-width: 840px; margin: 0 auto; }
+.empty-title { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+.empty-body  { font-size: 15px; color: var(--text-secondary); }
+
+/* Responsive */
+@media (max-width: 520px) {
+  body { padding: 28px 16px 56px; }
+  .landing-title, .page-title { font-size: 28px; }
+  .dropzone { padding: 36px 20px; }
+  .report-topbar { flex-direction: column; align-items: flex-start; }
+  .stat-value { font-size: 17px; }
+  .stat-value.na { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Landing -->
+<div id="landing">
+  <div class="landing-header">
+    <h1 class="landing-title">Ride Report</h1>
+    <p class="landing-sub">Upload your ride files to analyze and share</p>
+  </div>
+
+  <div class="dropzone" id="dropzone" role="button" tabindex="0"
+       aria-label="Drop ride files here or click to choose">
+    <div class="upload-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </div>
+    <p class="upload-title">Drop ride files here</p>
+    <p class="upload-hint">
+      Supports <span>.jsonl</span> from MotorcycleTrackShare<br>
+      and standard <span>.gpx</span> files
+    </p>
+    <button class="btn-primary" type="button" id="chooseBtn">Choose Files</button>
+    <input type="file" id="fileInput" accept=".gpx,.GPX,.jsonl,.JSONL" multiple hidden>
+  </div>
+</div>
+
+<!-- Processing -->
+<div class="processing" id="processing">
+  <div class="spinner"></div>
+  <p class="processing-label">Analyzing rides...</p>
+</div>
+
+<!-- Report -->
+<div id="report-view">
+  <div class="report-topbar">
+    <div>
+      <h1 class="page-title">Ride Report</h1>
+      <p class="page-meta" id="report-meta"></p>
+    </div>
+    <div class="report-actions">
+      <button class="btn-secondary" type="button" id="newUploadBtn">New Upload</button>
+      <button class="btn-primary"   type="button" id="downloadBtn">Download Report</button>
+    </div>
+  </div>
+  <div class="rides" id="ridesContainer"></div>
+</div>
+
+<script>
+// ── Design tokens ─────────────────────────────────────────────────────────────
+
+const T = {
+  surfaceRaised: '#2F2F2F',
+  divider:       '#383838',
+  textGhost:     '#595959',
+  ember:         '#FF6D00',
+};
+
+// ── Math ──────────────────────────────────────────────────────────────────────
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371.0, r = d => d * Math.PI / 180;
+  const dLat = r(lat2 - lat1), dLon = r(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(dLon/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// ── Parsers ───────────────────────────────────────────────────────────────────
+// Point: [lat, lon, ele, t, speedMps, leanDeg]
+
+function parseGpx(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  return [...doc.getElementsByTagNameNS('*', 'trkpt')].map(tp => {
+    const lat = parseFloat(tp.getAttribute('lat'));
+    const lon = parseFloat(tp.getAttribute('lon'));
+    const eleEl  = tp.getElementsByTagNameNS('*', 'ele')[0];
+    const timeEl = tp.getElementsByTagNameNS('*', 'time')[0];
+    return [
+      lat, lon,
+      eleEl  ? parseFloat(eleEl.textContent)  : null,
+      timeEl ? new Date(timeEl.textContent).getTime() / 1000 : null,
+      null, null,
+    ];
+  });
+}
+
+function parseJsonl(text) {
+  return text.split('\n').flatMap(line => {
+    const s = line.trim();
+    if (!s) return [];
+    let obj;
+    try { obj = JSON.parse(s); } catch { return []; }
+    if (obj.lat == null || obj.lon == null) return [];
+    return [[obj.lat, obj.lon, null, obj.t ?? null, obj.speedMps ?? null, obj.leanDeg ?? null]];
+  });
+}
+
+function loadPoints(name, text) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (ext === 'gpx')   return parseGpx(text);
+  if (ext === 'jsonl') return parseJsonl(text);
+  return [];
+}
+
+// ── Ride stats ────────────────────────────────────────────────────────────────
+
+function rideStats(pts) {
+  if (pts.length < 2)
+    return { distance_km:0, duration_h:0, elevation_gain_m:0, max_elevation_m:null,
+             avg_speed_kmh:0, max_speed_kmh:null, max_lean_deg:null,
+             max_lean_right_deg:null, max_lean_left_deg:null };
+
+  let distKm = 0, elevGain = 0, maxEle = null, t0 = null, t1 = null, maxSpd = null;
+  const leans = [];
+  let prev = null;
+
+  for (const [lat, lon, ele, t, spd, lean] of pts) {
+    if (prev) {
+      distKm += haversineKm(prev[0], prev[1], lat, lon);
+      if (prev[2] != null && ele != null && ele > prev[2]) elevGain += ele - prev[2];
+    }
+    if (ele != null && (maxEle === null || ele > maxEle)) maxEle = ele;
+    if (t  != null) { if (t0 === null) t0 = t; t1 = t; }
+    if (spd != null && (maxSpd === null || spd > maxSpd)) maxSpd = spd;
+    if (lean != null) leans.push(lean);
+    prev = [lat, lon, ele, t, spd, lean];
+  }
+
+  const durH   = (t0 != null && t1 != null) ? (t1 - t0) / 3600 : 0;
+  const absL   = leans.map(Math.abs);
+  const rightL = leans.filter(v => v > 0);
+  const leftL  = leans.filter(v => v < 0).map(Math.abs);
+
+  return {
+    distance_km:        distKm,
+    duration_h:         durH,
+    elevation_gain_m:   elevGain,
+    max_elevation_m:    maxEle,
+    avg_speed_kmh:      durH > 0 ? distKm / durH : 0,
+    max_speed_kmh:      maxSpd != null ? maxSpd * 3.6 : null,
+    max_lean_deg:       absL.length   ? Math.max(...absL)   : null,
+    max_lean_right_deg: rightL.length ? Math.max(...rightL) : null,
+    max_lean_left_deg:  leftL.length  ? Math.max(...leftL)  : null,
+  };
+}
+
+// ── Acceleration analysis ─────────────────────────────────────────────────────
+
+function countEvents(values, threshold) {
+  let count = 0, inEvent = false;
+  for (const v of values) {
+    if (v > threshold) { if (!inEvent) { count++; inEvent = true; } }
+    else inEvent = false;
+  }
+  return count;
+}
+
+function accelSeries(pts) {
+  const dist = [], accels = [];
+  let cum = 0, prev = null;
+  for (const pt of pts) {
+    const [lat, lon, , t, spd] = pt;
+    if (prev) {
+      cum += haversineKm(prev[0], prev[1], lat, lon);
+      const dt = (t != null && prev[3] != null) ? t - prev[3] : null;
+      const dv = (spd != null && prev[4] != null) ? spd - prev[4] : null;
+      if (dt != null && dv != null && dt >= 0.04 && dt <= 2.0) {
+        const ag = (dv / dt) / 9.81;
+        if (Math.abs(ag) <= 2.5) { dist.push(cum); accels.push(ag); }
+      }
+    }
+    prev = pt;
+  }
+  return [dist, accels];
+}
+
+const STYLE_META = {
+  'Smooth':     { color: '#3DB88A', bg: 'rgba(61,184,138,0.12)',
+                  desc: 'Calm, progressive inputs throughout. Consistent throttle and braking with low lean angles.' },
+  'Spirited':   { color: '#FF9A3C', bg: 'rgba(255,154,60,0.12)',
+                  desc: 'Confident inputs with measured aggression. Good pace with controlled lean and purposeful braking.' },
+  'Aggressive': { color: '#FF6D00', bg: 'rgba(255,109,0,0.12)',
+                  desc: 'Hard acceleration, strong braking, and committed lean angles. Pushing the machine.' },
+  'Track Mode': { color: '#FF453A', bg: 'rgba(255,69,58,0.12)',
+                  desc: 'Maximum effort across all inputs. Extreme lean angles, hard launches, and late braking.' },
+};
+
+function ridingStyleAnalysis(pts, baseStats) {
+  const [, accelG] = accelSeries(pts);
+  if (!accelG.length) return null;
+
+  const pos = accelG.filter(a => a > 0);
+  const neg = accelG.filter(a => a < 0);
+
+  const maxAccelG = pos.length ? Math.max(...pos) : 0;
+  const maxBrakeG = neg.length ? Math.abs(Math.min(...neg)) : 0;
+  const hardAccel = countEvents(accelG, 0.25);
+  const hardBrake = countEvents(neg.map(a => -a), 0.25);
+  const smoothPct = accelG.filter(a => Math.abs(a) < 0.08).length / accelG.length * 100;
+
+  const maxLean = baseStats.max_lean_deg || 0;
+  const score = (
+    Math.min(40, maxLean    / 55  * 40) +
+    Math.min(30, maxAccelG  / 0.5 * 30) +
+    Math.min(30, maxBrakeG  / 0.7 * 30)
+  );
+
+  const style = score < 20 ? 'Smooth' : score < 45 ? 'Spirited' : score < 70 ? 'Aggressive' : 'Track Mode';
+  const meta  = STYLE_META[style];
+
+  return { maxAccelG, maxBrakeG, hardAccel, hardBrake, smoothPct, style, ...meta, score };
+}
+
+// ── Chart series ──────────────────────────────────────────────────────────────
+
+function makeSeries(pts, fn) {
+  const dist = [], vals = [];
+  let cum = 0, prev = null;
+  for (const pt of pts) {
+    if (prev) cum += haversineKm(prev[0], prev[1], pt[0], pt[1]);
+    const v = fn(pt);
+    if (v != null) { dist.push(cum); vals.push(v); }
+    prev = pt;
+  }
+  return [dist, vals];
+}
+
+const elSeries  = pts => makeSeries(pts, p => p[2]);
+const spdSeries = pts => makeSeries(pts, p => p[4] != null ? p[4] * 3.6 : null);
+const lnSeries  = pts => makeSeries(pts, p => p[5]);
+
+// ── SVG helpers ───────────────────────────────────────────────────────────────
+
+let _sid = 0;
+
+function svgShell(W, H, M, pw, ph, id, extraDefs, content) {
+  const grid = [0,1,2].map(i => {
+    const y = (M + i * ph / 2).toFixed(1);
+    return `<line x1="${M}" y1="${y}" x2="${W-M}" y2="${y}" stroke="${T.divider}" stroke-width="1"/>`;
+  }).join('');
+  return (
+    `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"`
+    + ` style="display:block;width:100%;height:auto;border-radius:10px">`
+    + `<defs>${extraDefs}</defs>`
+    + `<rect width="${W}" height="${H}" fill="${T.surfaceRaised}" rx="10"/>`
+    + grid
+    + `<line x1="${M}" y1="${H-M}" x2="${W-M}" y2="${H-M}" stroke="${T.divider}" stroke-width="1"/>`
+    + `<line x1="${M}" y1="${M}" x2="${M}" y2="${H-M}" stroke="${T.divider}" stroke-width="1"/>`
+    + content
+    + `</svg>`
+  );
+}
+
+function axisLabels(M, H, W, pw, ymin, ymax, xmax, yFmt = v => v.toFixed(0)) {
+  return (
+    `<text x="${M-5}" y="${M+4}" text-anchor="end" fill="${T.textGhost}" font-size="9" font-family="-apple-system,system-ui,sans-serif">${yFmt(ymax)}</text>`
+    + `<text x="${M-5}" y="${H-M+4}" text-anchor="end" fill="${T.textGhost}" font-size="9" font-family="-apple-system,system-ui,sans-serif">${yFmt(ymin)}</text>`
+    + `<text x="${M}" y="${H-4}" text-anchor="start" fill="${T.textGhost}" font-size="9" font-family="-apple-system,system-ui,sans-serif">0 km</text>`
+    + `<text x="${W-M}" y="${H-4}" text-anchor="end" fill="${T.textGhost}" font-size="9" font-family="-apple-system,system-ui,sans-serif">${xmax.toFixed(1)} km</text>`
+  );
+}
+
+function buildSvg(dist, vals, { color = T.ember, label = '', zeroLine = false } = {}) {
+  if (!dist.length || dist.length < 2) return '';
+  const id = ++_sid;
+  const W = 560, H = 110, M = 32, pw = W - 2*M, ph = H - 2*M;
+
+  let xmin = Math.min(...dist), xmax = Math.max(...dist);
+  let ymin = Math.min(...vals),  ymax = Math.max(...vals);
+  if (zeroLine) { const ya = Math.max(Math.abs(ymin), Math.abs(ymax), 1); ymin = -ya; ymax = ya; }
+
+  const xr = xmax > xmin ? xmax - xmin : 1;
+  const yr = ymax > ymin ? ymax - ymin : 1;
+
+  const ptStr = dist.map((x, i) =>
+    `${(M + (x-xmin)*(pw/xr)).toFixed(1)},${(H-M-(vals[i]-ymin)*(ph/yr)).toFixed(1)}`
+  ).join(' ');
+
+  let zeroMark = '';
+  if (zeroLine && ymin < 0 && ymax > 0) {
+    const zy = (H - M - (0 - ymin) * (ph / yr)).toFixed(1);
+    zeroMark = `<line x1="${M}" y1="${zy}" x2="${W-M}" y2="${zy}" stroke="${T.textGhost}" stroke-width="1" stroke-dasharray="4,3"/>`;
+  }
+
+  const defs = `<linearGradient id="g${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0.15"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></linearGradient>`;
+  const body = (
+    axisLabels(M, H, W, pw, ymin, ymax, xmax)
+    + zeroMark
+    + `<polygon fill="url(#g${id})" points="${M},${H-M} ${ptStr} ${(M+pw).toFixed(1)},${H-M}"/>`
+    + `<polyline fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${ptStr}"/>`
+  );
+
+  return svgShell(W, H, M, pw, ph, id, defs, body);
+}
+
+function buildAccelSvg(dist, accelG) {
+  if (!dist.length || dist.length < 2) return '';
+  const id = ++_sid;
+  const W = 560, H = 110, M = 32, pw = W - 2*M, ph = H - 2*M;
+
+  const xmin = Math.min(...dist), xmax = Math.max(...dist);
+  const ya   = Math.max(Math.max(...accelG.map(Math.abs)), 0.1);
+  const ymin = -ya, ymax = ya;
+  const xr   = xmax > xmin ? xmax - xmin : 1;
+  const yr   = ymax - ymin;
+
+  const zy = H - M - (0 - ymin) * (ph / yr);
+
+  const ptStr = dist.map((x, i) =>
+    `${(M + (x-xmin)*(pw/xr)).toFixed(1)},${(H-M-(accelG[i]-ymin)*(ph/yr)).toFixed(1)}`
+  ).join(' ');
+
+  const firstX = M.toFixed(1), lastX = (M+pw).toFixed(1);
+  const poly   = `${firstX},${zy.toFixed(1)} ${ptStr} ${lastX},${zy.toFixed(1)}`;
+
+  const clipPosH = Math.max(0, zy - M).toFixed(1);
+  const clipNegH = Math.max(0, H - M - zy).toFixed(1);
+
+  const defs = (
+    `<linearGradient id="ag${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF6D00" stop-opacity="0.35"/><stop offset="100%" stop-color="#FF6D00" stop-opacity="0"/></linearGradient>`
+    + `<linearGradient id="brd${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4D9EFF" stop-opacity="0"/><stop offset="100%" stop-color="#4D9EFF" stop-opacity="0.35"/></linearGradient>`
+    + `<clipPath id="cp${id}"><rect x="${M}" y="${M}" width="${pw}" height="${clipPosH}"/></clipPath>`
+    + `<clipPath id="cn${id}"><rect x="${M}" y="${zy.toFixed(1)}" width="${pw}" height="${clipNegH}"/></clipPath>`
+  );
+
+  const body = (
+    axisLabels(M, H, W, pw, ymin, ymax, xmax, v => (v > 0 ? '+' : '') + v.toFixed(1) + 'g')
+    + `<polygon fill="url(#ag${id})"  clip-path="url(#cp${id})"  points="${poly}"/>`
+    + `<polygon fill="url(#brd${id})" clip-path="url(#cn${id})"  points="${poly}"/>`
+    + `<line x1="${M}" y1="${zy.toFixed(1)}" x2="${W-M}" y2="${zy.toFixed(1)}" stroke="${T.textGhost}" stroke-width="1" stroke-dasharray="4,3"/>`
+    + `<polyline fill="none" stroke="#C8C8C6" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" points="${ptStr}"/>`
+  );
+
+  return svgShell(W, H, M, pw, ph, id, defs, body);
+}
+
+// ── Card HTML ─────────────────────────────────────────────────────────────────
+
+function fmt(v, dec = 1) { return v != null ? parseFloat(v).toFixed(dec) : null; }
+
+function statEl(label, display, cls = '', sub = '') {
+  const vc = ['stat-value', cls].filter(Boolean).join(' ');
+  const subHtml = sub ? `<span class="stat-sub">${sub}</span>` : '';
+  return `<div class="stat"><span class="${vc}">${display}</span>${subHtml}<span class="stat-label">${label}</span></div>`;
+}
+
+function styleSectionHtml(sd) {
+  if (!sd) return '';
+  const fmtG   = v => v != null ? v.toFixed(2) + 'g' : '&mdash;';
+  const fmtPct = v => v != null ? v.toFixed(0) + '%'  : '&mdash;';
+  const fmtEv  = v => v != null ? String(v)            : '&mdash;';
+
+  return (
+    `<div class="style-section">`
+    + `<div class="style-header">`
+    + `<span class="chart-heading">Riding Style</span>`
+    + `<span class="style-badge" style="background:${sd.bg};color:${sd.color}">${sd.style}</span>`
+    + `</div>`
+    + `<p class="style-desc">${sd.desc}</p>`
+    + `<div class="accel-stats">`
+    + statEl('Peak Accel', fmtG(sd.maxAccelG), '', `${fmtEv(sd.hardAccel)} hard events`)
+    + statEl('Peak Brake', fmtG(sd.maxBrakeG), '', `${fmtEv(sd.hardBrake)} hard events`)
+    + statEl('Smooth',     fmtPct(sd.smoothPct), '', 'of ride time')
+    + `</div></div>`
+  );
+}
+
+function rideCardHtml(row, charts, sd) {
+  const isApp   = row.file.toLowerCase().endsWith('.jsonl');
+  const source  = isApp ? 'iOS App' : 'GPX';
+  const spdDisp = row.max_speed_kmh != null ? `${fmt(row.max_speed_kmh)} km/h` : '&mdash;';
+  const spdCls  = row.max_speed_kmh != null ? 'ember' : 'na';
+  const lnDisp  = row.max_lean_deg  != null ? `${fmt(row.max_lean_deg)}&deg;`   : '&mdash;';
+  const lnCls   = row.max_lean_deg  != null ? 'ember' : 'na';
+
+  const chartDefs = [
+    ['Speed (km/h)',     'speed'],
+    ['Lean Angle (°)',  'lean'],
+    ['Acceleration (g)', 'accel'],
+    ['Elevation (m)',    'elevation'],
+  ];
+
+  const chartsHtml = '<div class="charts">'
+    + chartDefs.filter(([, k]) => charts[k]).map(([heading, key]) => {
+        const legend = key === 'accel'
+          ? `<div class="accel-legend">`
+            + `<span class="legend-item"><span class="legend-dot" style="background:#FF6D00"></span>Acceleration</span>`
+            + `<span class="legend-item"><span class="legend-dot" style="background:#4D9EFF"></span>Braking</span>`
+            + `</div>`
+          : '';
+        return `<div class="chart-block"><span class="chart-heading">${heading}</span>${charts[key]}${legend}</div>`;
+      }).join('')
+    + '</div>';
+
+  return (
+    `<div class="ride-card">`
+    + `<div class="ride-card-header"><span class="ride-name">${row.file}</span><span class="source-badge">${source}</span></div>`
+    + `<div class="ride-card-body">`
+    + `<div class="stats-primary">`
+    + statEl('Distance',  `${fmt(row.distance_km, 2)} km`)
+    + statEl('Duration',  `${fmt(row.duration_h,  2)} h`)
+    + statEl('Avg Speed', `${fmt(row.avg_speed_kmh)} km/h`)
+    + `</div>`
+    + `<div class="stats-highlight">`
+    + statEl('Max Speed', spdDisp, spdCls)
+    + statEl('Max Lean',  lnDisp,  lnCls)
+    + `</div>`
+    + styleSectionHtml(sd)
+    + chartsHtml
+    + `</div></div>`
+  );
+}
+
+// ── Processing pipeline ───────────────────────────────────────────────────────
+
+let _lastRows   = [];
+let _lastCharts = {};
+let _lastStyles = {};
+
+async function readFile(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = rej;
+    r.readAsText(file);
+  });
+}
+
+async function processFiles(files) {
+  _sid = 0;
+  _lastRows = []; _lastCharts = {}; _lastStyles = {};
+
+  for (const file of files) {
+    const text  = await readFile(file);
+    const pts   = loadPoints(file.name, text);
+    const stats = rideStats(pts);
+    const sd    = ridingStyleAnalysis(pts, stats);
+
+    const [dEl, el]  = elSeries(pts);
+    const [dSp, sp]  = spdSeries(pts);
+    const [dLn, ln]  = lnSeries(pts);
+    const [dAc, ac]  = accelSeries(pts);
+
+    _lastCharts[file.name] = {
+      elevation: buildSvg(dEl, el, { color: '#3DB88A', label: 'Elevation' }),
+      speed:     buildSvg(dSp, sp, { color: T.ember,   label: 'Speed' }),
+      lean:      buildSvg(dLn, ln, { color: '#FF9A3C', label: 'Lean', zeroLine: true }),
+      accel:     buildAccelSvg(dAc, ac),
+    };
+    _lastStyles[file.name] = sd;
+    _lastRows.push({ file: file.name, ...stats });
+  }
+}
+
+// ── Download ──────────────────────────────────────────────────────────────────
+
+function downloadReport() {
+  const count = _lastRows.length;
+  const meta  = `${count} ride${count !== 1 ? 's' : ''} analyzed`;
+  const css   = document.querySelector('style').textContent;
+  const cards = _lastRows.map(r => rideCardHtml(r, _lastCharts[r.file] || {}, _lastStyles[r.file])).join('\n');
+
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ride Report</title>
+<style>${css}</style>
+</head>
+<body style="padding:44px 24px 72px">
+<div style="max-width:840px;margin:0 auto 32px">
+  <h1 class="page-title">Ride Report</h1>
+  <p class="page-meta">${meta}</p>
+</div>
+<div class="rides">${cards}</div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {
+    href: url, download: `ride-report-${new Date().toISOString().slice(0,10)}.html`
+  });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── View management ───────────────────────────────────────────────────────────
+
+const DISPLAY_TYPE = { landing: 'flex', processing: 'flex', 'report-view': 'block' };
+function show(id) {
+  ['landing', 'processing', 'report-view'].forEach(el => {
+    document.getElementById(el).style.display = el === id ? DISPLAY_TYPE[el] : 'none';
+  });
+}
+
+function renderReport() {
+  const count = _lastRows.length;
+  document.getElementById('report-meta').textContent = `${count} ride${count !== 1 ? 's' : ''} analyzed`;
+
+  const container = document.getElementById('ridesContainer');
+  container.innerHTML = count
+    ? _lastRows.map(r => rideCardHtml(r, _lastCharts[r.file] || {}, _lastStyles[r.file])).join('')
+    : `<div class="empty"><div class="empty-title">No rides found</div><p class="empty-body">The uploaded files didn't contain any readable ride data.</p></div>`;
+
+  show('report-view');
+}
+
+async function handleFiles(files) {
+  if (!files.length) return;
+  show('processing');
+  await new Promise(r => setTimeout(r, 30));
+  try {
+    await processFiles(files);
+    renderReport();
+  } catch (err) {
+    console.error(err);
+    show('landing');
+    alert('Something went wrong while reading the files. Check the console for details.');
+  }
+}
+
+// ── Event wiring ──────────────────────────────────────────────────────────────
+
+const dropzone  = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+
+document.getElementById('chooseBtn').addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
+dropzone.addEventListener('click',   () => fileInput.click());
+dropzone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+fileInput.addEventListener('change', () => handleFiles([...fileInput.files]));
+
+dropzone.addEventListener('dragover',  e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', e => { if (!dropzone.contains(e.relatedTarget)) dropzone.classList.remove('drag-over'); });
+dropzone.addEventListener('drop',      e => { e.preventDefault(); dropzone.classList.remove('drag-over'); handleFiles([...e.dataTransfer.files]); });
+
+document.getElementById('newUploadBtn').addEventListener('click', () => { fileInput.value = ''; show('landing'); });
+document.getElementById('downloadBtn').addEventListener('click', downloadReport);
+</script>
+</body>
+</html>
